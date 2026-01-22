@@ -1,125 +1,139 @@
-# Project Plan & Timeline — Insurance Analytics
+# Project Plan & Timeline
 
-## Inputs (Locked)
-- Start date: 13 Jan 2026
-- Duration: 6 weeks
-- Effort: 21 hrs/week
-- Delivery lifecycle: DEV → UAT → PROD
+## 1. Project Goal
+The goal of this project is to design and deliver an **end-to-end, enterprise-grade Insurance Analytics solution** using:
+- SQL for data modeling, data generation, and transformations
+- Power BI for semantic modeling, advanced DAX, and reporting
 
-## Project Goal
-Build a production-grade Insurance Analytics solution where:
-- SQL handles data engineering (staging → core → gold views)
-- Power BI handles semantic modeling, DAX, and reporting
-- Delivery follows enterprise promotion gates with validation
-
----
-
-## Timeline Summary (High Level)
-
-| Week | Phase | Focus | Milestone |
-|-----|------|-------|-----------|
-| 1–2 | Phase 1 | SQL Data Engineering | M1 |
-| 3 | Phase 2 | Requirements & Specs | M2 |
-| 4 | Phase 3 | Power BI Build | M3 |
-| 5 | Phase 4 | QA & Readiness | M4 |
-| 6 | Phase 5–7 | UAT → PROD → Portfolio | M5–M7 |
+This project is portfolio-focused and demonstrates:
+- Large-scale data handling (millions of records)
+- Advanced SQL and DAX skills
+- Enterprise delivery lifecycle (DEV → UAT → PROD)
+- Strong documentation, governance, and testing practices
 
 ---
 
-## Detailed Week-by-Week Plan
+## 2. Project Basics
+- Project Name: Insurance Analytics
+- Start Date: 16 Jan 2026
+- Duration: 3 Weeks
+- Effort: ~24 hours/week (≈72 total hours)
+- Delivery Model: DEV → UAT → PROD
 
-### Week 1 (13–19 Jan 2026) — SQL Model Foundation
-**Objective:** Establish a correct, scalable core data model.
+---
 
+## 3. Timeline Summary (High Level)
+
+| Week | Focus Area | Key Outcome |
+|-----|-----------|-------------|
+| Week 1 | SQL Data Engineering | Gold-ready SQL model with large-scale data |
+| Week 2 | Specs + Power BI Core | Business-approved KPIs + semantic model |
+| Week 3 | Advanced DAX, UAT & PROD | Production-ready solution & portfolio |
+
+---
+
+## 4. Detailed Week-by-Week Plan
+
+### Week 1 (16–22 Jan 2026) — SQL Foundation & Data Engineering
 **Activities**
-- Define business grain for each fact table
-- Design dimensions: policy, customer, agent, product, date
-- Design fact tables: premium, claims
-- Create staging tables (stg_*)
-- Implement initial DDL scripts
-- Load synthetic data for validation
+- Create database schemas
+- Build dimension and fact tables
+- Generate large-scale insurance data  
+  (Policies ~5M, Premium Transactions ~50M, Claims ~5M)
+- Create curated Gold views (`vw_gold_*`)
+- Implement SQL validation checks:
+  - Row count checks
+  - Reconciliation checks
+  - Data quality checks
+- Document ERD and data dictionary
 
-**Effort:** ~21 hrs  
-**Exit Check:** DDL scripts exist and data loads run without errors
+**Deliverables**
+- SQL DDL and ETL scripts
+- Gold views ready for reporting
+- SQL validation scripts
+- Data model documentation
+
+**Exit Check**
+- All fact and dimension tables created
+- Gold views stable and queryable
+- Validation queries passing
+- Data model documentation completed
 
 ---
 
-### Week 2 (20–26 Jan 2026) — Gold Views & SQL Validation (M1)
-**Objective:** Make SQL layer reporting-ready.
-
+### Week 2 (23–29 Jan 2026) — Specifications & Power BI Core Build
 **Activities**
-- Build `vw_gold_*` views as reporting contracts
-- Implement data-quality checks (nulls, duplicates, orphan keys)
-- Implement reconciliation queries for core KPIs
-- Add indexes and constraints
-- Run performance sanity checks
-
-**Exit Check (M1):** Gold views stable and validation checks pass
-
----
-
-### Week 3 (27 Jan–2 Feb 2026) — Requirements & Specifications (M2)
-**Objective:** Lock scope before analytics build.
-
-**Activities**
-- Create Business Requirement Document (BRD)
-- Build KPI catalog (definitions, formulas, grain)
-- Design report wireframes
+- Create Business Requirements Document (BRD)
 - Create Functional Specification
 - Create Design Specification
-- Define acceptance criteria
+- Connect Power BI to SQL Gold views
+- Build star schema semantic model
+- Create Date table and relationships
+- Implement base and intermediate DAX measures
+- Design report wireframes and layout
 
-**Exit Check (M2):** Specifications approved and scope frozen
+**Deliverables**
+- BRD, Functional Spec, Design Spec
+- Power BI semantic model
+- Base DAX measures
+- Initial report structure
+
+**Exit Check**
+- KPIs reviewed and locked
+- Semantic model relationships validated
+- Base measures producing correct results
 
 ---
 
-### Week 4 (3–9 Feb 2026) — Power BI Model & Report Build (M3)
-**Objective:** Build feature-complete analytics in DEV.
-
+### Week 3 (30 Jan–05 Feb 2026) — Advanced DAX, QA, UAT & Production
 **Activities**
-- Build semantic model on `vw_gold_*`
-- Implement measures-first DAX
-- Add time intelligence (YoY, MoM, R12)
-- Build report pages per wireframes
-- Initial refresh and validation
-
-**Exit Check (M3):** All pages and measures implemented in DEV
-
----
-
-### Week 5 (10–16 Feb 2026) — QA, Performance & Security (M4)
-**Objective:** Prepare a release candidate.
-
-**Activities**
+- Implement advanced DAX:
+  - YoY, MoM, Rolling metrics
+  - Rankings and % contribution
+  - Dynamic titles and conditional formatting
 - Implement Row-Level Security (RLS)
 - Configure incremental refresh
-- Use Performance Analyzer for tuning
-- Reconcile Power BI results with SQL
-- Prepare UAT test plan
+- Perform performance tuning
+- Execute UAT and close issues
+- Deploy solution to PROD
+- Capture screenshots and finalize documentation
 
-**Exit Check (M4):** Release candidate ready for UAT
+**Deliverables**
+- Advanced DAX measures
+- RLS and incremental refresh configuration
+- UAT signoff document
+- Production deployment guide
+- Post-deployment report
+- Portfolio-ready README and assets
 
----
-
-### Week 6 (17–23 Feb 2026) — UAT, PROD & Portfolio (M5–M7)
-**Objective:** Signoff, deploy, and package.
-
-**Activities**
-- Execute UAT and resolve issues
-- Obtain UAT signoff
-- Prepare release notes and rollback plan
-- Deploy to PROD and run smoke tests
-- Update README with project story
-- Add screenshots and walkthrough notes
-
-**Exit Checks**
-- M5: UAT signoff complete
-- M6: Production live and validated
-- M7: Repository portfolio-ready
+**Exit Check**
+- UAT signed off
+- Production deployment successful
+- Performance and security validated
+- Repository ready for portfolio use
 
 ---
 
-## Governance & Tracking
-- Work tracked via GitHub Kanban board
-- Tasks move: Backlog → To Do → In Progress → In Review → Done
-- Promotion follows DEV → UAT → PROD discipline
+## 5. Governance & Tracking
+
+### Project Tracking
+- GitHub Project Board (Kanban) used for tracking progress
+- Work organized into EPICs and Tasks
+- Daily progress tracked by moving cards across columns:
+  - Backlog → To Do → In Progress → In Review → Done
+
+### Version Control
+- `main` branch: production-ready code
+- `dev` branch: integration branch
+- `feature/*` branches: individual work items
+- Production releases marked using Git tags
+
+### Documentation Governance
+- All decisions recorded in `Decisions_Log.md`
+- Each phase produces documented deliverables
+- No phase proceeds without exit criteria being met
+
+### Quality & Control
+- SQL validation scripts executed before Power BI build
+- UAT required before production deployment
+- Rollback and post-deployment validation documented
