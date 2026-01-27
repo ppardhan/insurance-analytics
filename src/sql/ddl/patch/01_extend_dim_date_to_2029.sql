@@ -48,3 +48,13 @@ FROM (
     GROUP BY date_key
     HAVING COUNT(*) > 1
 ) x;
+
+SELECT
+    COUNT(*)      AS TotalDates,
+    MIN(full_date) AS MinDate,
+    MAX(full_date) AS MaxDate
+FROM core.dim_date;
+
+select * from core.dim_date
+
+select count(*) FROM core.dim_date

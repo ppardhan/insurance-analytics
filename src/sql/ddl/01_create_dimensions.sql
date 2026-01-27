@@ -278,3 +278,4 @@ FROM (
     GROUP BY customer_id
     HAVING COUNT(*) > 1
 ) d;
+SELECT * from core.dim_customer

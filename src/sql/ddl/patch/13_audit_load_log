@@ -1,0 +1,175 @@
+/* =========================================================
+   AUDIT: audit.audit_load_log (enterprise-grade)
+   Purpose:
+     - Track every load run (who/when/what/how many rows/error)
+     - Supports UAT/Prod governance, reruns, troubleshooting
+========================================================= */
+
+USE insurance_DB;
+GO
+
+SET NOCOUNT ON;
+SET XACT_ABORT ON;
+
+-----------------------------------------------------------
+-- 0) Safety checks
+-----------------------------------------------------------
+IF DB_ID('insurance_DB') IS NULL
+BEGIN
+    RAISERROR('Database insurance_DB does not exist.', 16, 1);
+    RETURN;
+END;
+
+-----------------------------------------------------------
+-- 1) Create audit schema (safe)
+-----------------------------------------------------------
+IF NOT EXISTS (SELECT 1 FROM sys.schemas WHERE name = 'audit')
+    EXEC('CREATE SCHEMA audit');
+GO
+
+-----------------------------------------------------------
+-- 2) Create audit_load_log table
+-----------------------------------------------------------
+IF OBJECT_ID('audit.audit_load_log','U') IS NOT NULL
+    DROP TABLE audit.audit_load_log;
+GO
+
+CREATE TABLE audit.audit_load_log (
+    load_log_key         BIGINT IDENTITY(1,1) NOT NULL PRIMARY KEY,
+
+    pipeline_name        VARCHAR(100) NOT NULL,    -- e.g., dim_customer_load
+    target_object        VARCHAR(200) NOT NULL,    -- e.g., core.dim_customer
+    load_type            VARCHAR(30)  NOT NULL,    -- FULL / INCR / PATCH
+    environment_name     VARCHAR(20)  NOT NULL,    -- DEV / UAT / PROD
+
+    run_id               UNIQUEIDENTIFIER NOT NULL, -- group all steps in a run
+    batch_id             INT NULL,                  -- optional, if batching
+
+    start_time           DATETIME2(0) NOT NULL,
+    end_time             DATETIME2(0) NULL,
+
+    status               VARCHAR(20)  NOT NULL,     -- STARTED/SUCCESS/FAILED
+    rows_inserted        BIGINT       NULL,
+    rows_updated         BIGINT       NULL,
+    rows_deleted         BIGINT       NULL,
+
+    error_number         INT          NULL,
+    error_message        VARCHAR(4000) NULL,
+
+    executed_by          VARCHAR(200) NOT NULL DEFAULT SUSER_SNAME(),
+    host_name            VARCHAR(200) NOT NULL DEFAULT HOST_NAME(),
+    created_at           DATETIME2(0) NOT NULL DEFAULT SYSDATETIME()
+);
+GO
+
+CREATE INDEX IX_audit_load_log_runid       ON audit.audit_load_log(run_id);
+CREATE INDEX IX_audit_load_log_target_time ON audit.audit_load_log(target_object, start_time);
+CREATE INDEX IX_audit_load_log_status_time ON audit.audit_load_log(status, start_time);
+GO
+
+-----------------------------------------------------------
+-- 3) Helper stored procedures (Start / End)
+--    NOTE: Each CREATE PROC must be its own batch -> GO used.
+-----------------------------------------------------------
+
+IF OBJECT_ID('audit.sp_audit_start','P') IS NOT NULL
+    DROP PROCEDURE audit.sp_audit_start;
+GO
+
+CREATE PROCEDURE audit.sp_audit_start
+    @pipeline_name    VARCHAR(100),
+    @target_object    VARCHAR(200),
+    @load_type        VARCHAR(30),
+    @environment_name VARCHAR(20),
+    @run_id           UNIQUEIDENTIFIER OUTPUT,
+    @batch_id         INT = NULL
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    IF @run_id IS NULL
+        SET @run_id = NEWID();
+
+    INSERT INTO audit.audit_load_log (
+        pipeline_name, target_object, load_type, environment_name,
+        run_id, batch_id, start_time, status
+    )
+    VALUES (
+        @pipeline_name, @target_object, @load_type, @environment_name,
+        @run_id, @batch_id, SYSDATETIME(), 'STARTED'
+    );
+
+    SELECT SCOPE_IDENTITY() AS load_log_key, @run_id AS run_id;
+END;
+GO
+
+IF OBJECT_ID('audit.sp_audit_end','P') IS NOT NULL
+    DROP PROCEDURE audit.sp_audit_end;
+GO
+
+CREATE PROCEDURE audit.sp_audit_end
+    @run_id          UNIQUEIDENTIFIER,
+    @target_object   VARCHAR(200),
+    @status          VARCHAR(20),     -- SUCCESS/FAILED
+    @rows_inserted   BIGINT = NULL,
+    @rows_updated    BIGINT = NULL,
+    @rows_deleted    BIGINT = NULL,
+    @error_number    INT = NULL,
+    @error_message   VARCHAR(4000) = NULL,
+    @batch_id        INT = NULL
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    UPDATE audit.audit_load_log
+    SET
+        end_time      = SYSDATETIME(),
+        status        = @status,
+        rows_inserted = @rows_inserted,
+        rows_updated  = @rows_updated,
+        rows_deleted  = @rows_deleted,
+        error_number  = @error_number,
+        error_message = @error_message
+    WHERE run_id = @run_id
+      AND target_object = @target_object
+      AND ( (batch_id IS NULL AND @batch_id IS NULL) OR (batch_id = @batch_id) )
+      AND status = 'STARTED';
+END;
+GO
+
+-----------------------------------------------------------
+-- 4) Quick test (creates 1 STARTED + marks SUCCESS)
+-----------------------------------------------------------
+DECLARE @run UNIQUEIDENTIFIER = NULL;
+
+EXEC audit.sp_audit_start
+    @pipeline_name    = 'test_audit',
+    @target_object    = 'core.vw_fact_claim',
+    @load_type        = 'PATCH',
+    @environment_name = 'DEV',
+    @run_id           = @run OUTPUT,
+    @batch_id         = 1;
+
+EXEC audit.sp_audit_end
+    @run_id        = @run,
+    @target_object = 'core.vw_fact_claim',
+    @status        = 'SUCCESS',
+    @rows_inserted = 0,
+    @rows_updated  = 0,
+    @rows_deleted  = 0,
+    @error_number  = NULL,
+    @error_message = NULL,
+    @batch_id      = 1;
+
+-----------------------------------------------------------
+-- 5) Validations
+-----------------------------------------------------------
+SELECT COUNT(*) AS AuditRowCount
+FROM audit.audit_load_log;
+
+SELECT TOP 10 *
+FROM audit.audit_load_log
+ORDER BY load_log_key DESC;
+GO;
+
+select * from audit.audit_load_log;
